@@ -1,0 +1,24 @@
+{% extends 'base.html'%}
+
+{% block main_content%}
+    <h1>{{heading}}</h1>
+    <table>
+        {% for book in books%}
+            <tr>
+                <td>{{book['book_id']}} </td>
+                <td>{{book['title']}} </td>
+                <td>{{book['author']}} </td>
+            </tr>
+            <tr>
+                <td>{{book['dewey_decimal']}} </td>
+                <td>{{book['genre']}} </td>
+                <td>{{book['location']}} </td>
+                <td>{{book['checked_out']}} </td>
+            </tr>
+
+
+        {% endfor%}
+    </table>
+
+
+{% endblock%}
