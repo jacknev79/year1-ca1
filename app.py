@@ -1,6 +1,6 @@
 from flask import Flask, render_template, session, redirect, url_for, g, request
 from flask_session import Session
-from forms import LoginForm, RegistrationForm, RequestForm, AdminForm, AddBookForm, RemoveBookForm
+from forms import LoginForm, RegistrationForm, RequestForm, AdminForm, AddBookForm, RemoveBookForm, CheckoutForm
 from database import get_db, close_db
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -63,14 +63,14 @@ def cart():
         session['cart'] = {}
         session.modified = True
 
-    names = {}
+    titles = {}
     db = get_db()
     for book_id in session['cart']:
         book = db.execute('''SELECT * FROM books
                           WHERE book_id = ?''', (book_id,)).fetchone()
-        name = book['title']
-        names[book_id] = name
-    return render_template()
+        title = book['title']
+        titles[book_id] = title
+    return render_template('cart.html', cart= session["cart"])
 
 #might delete quantity???
 @app.route('/add_to_cart/<int:book_id>')
@@ -85,7 +85,7 @@ def add_to_cart(book_id):
         session['cart'][book_id] = session['cart'][book_id] + 1
 
     session.modified = True
-    return render_template()
+    return redirect(url_for('cart'))
 
 @app.route('/register', methods = ['GET','POST'])
 def register():
@@ -151,7 +151,7 @@ def history():
                WHERE user_id = ? AND return_date < ? AND is_returned = 1);''',(session['user_id'], current_date)).fetchall()
     return render_template ('books.html', books= books)
 
-@app.route('/checked_out')      #come back to
+@app.route('/checked_out')      
 @login_required
 def checked_out():
     
@@ -269,7 +269,7 @@ def add_book():
                     
 
                     today_date = date.today()
-                    return_date = str(today_date + timedelta(days=7))
+                    return_date = str(today_date + timedelta(days=28))
                     db.execute('''INSERT INTO checkout (user_id, book_id, date_checked_out, return_date, extensions, is_returned,is_late)
                             VALUES (?,?,?,?,?,?,?)''',(user_id, book['max(book_id)'], today_date, return_date, 0, 0, 0))
                 db.commit()
@@ -298,3 +298,28 @@ def remove_book():
 
 
     return render_template('remove_book.html', form=form)
+
+@app.route('/checkout', methods=["GET","POST"])
+def checkout(): 
+    db = get_db()
+    today_date = date.today()
+    return_date = str(today_date + timedelta(days=28))
+    
+    form = CheckoutForm()
+    if form.validate_on_submit():
+        if 'cart' in session:
+            for book_id in session['cart']:
+                book = db.execute('''SELECT * FROM books
+                        WHERE book_id = ?''',(book_id,)).fetchone()
+                if book['checked_out'] == 0:
+                    db.execute('''UPDATE books SET checked_out = 1, requested = 0
+                        WHERE book_id = ?''',(book_id,))
+                    db.execute('''INSERT INTO checkout (user_id, book_id, date_checked_out, return_date, extensions, is_returned,is_late)
+                                    VALUES (?,?,?,?,?,?,?)''',(session['user_id'], book_id, today_date, return_date, 0, 0, 0))
+                    db.commit()
+    if 'cart' not in session or form.validate_on_submit():
+        session['cart'] = {}
+        session.modified = True
+        return redirect(url_for('library'))
+
+    return render_template('checkout.html', form=form, cart = session['cart'])

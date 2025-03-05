@@ -1,7 +1,7 @@
 {% extends 'base.html'%}
 
 {% block main_content%}
-    <h1>Your cart</h1>
+    <h1>Checkout</h1>
     {% if cart%}
         <table>
             {% for book_id in cart%}
@@ -11,8 +11,17 @@
                 </tr>
             {% endfor%}
         </table>
+
+        <form action="" method="POST" novalidate>
+            {{form.hidden_tag()}}
+            
+            {{form.submit()}}
+
+
+        </form>
     {% else%}
-        <p>Cart is empty</p>
+        <p>Cart is empty, please add items to cart before checkout!</p>
     {% endif%}
-        <a href="{{url_for('checkout')}}">Click here to checkout!</a>
+    
+
 {% endblock%}

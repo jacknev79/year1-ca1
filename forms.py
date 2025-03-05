@@ -40,4 +40,7 @@ class RemoveBookForm(FlaskForm):
     book_id2 = IntegerField('Please re-enter book ID:', validators=[EqualTo('book_id')])
     submit = SubmitField()
 
+class CheckoutForm(FlaskForm):
+    submit = SubmitField('Checkout')
+
 
