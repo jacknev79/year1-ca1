@@ -1,0 +1,62 @@
+{% extends 'base.html'%}
+
+{% block main_content%}
+<form action="" method="POST" novalidate>
+    {{form.hidden_tag()}}
+    {{form.title.label}}
+    {{form.title()}}
+    {% for error in form.title.errors%}
+        {{error}}
+    {% endfor%}
+    <br />
+    {{form.author.label}}
+    {{form.author()}}
+    {% for error in form.author.errors%}
+        {{error}}
+    {% endfor%}
+    <br />
+    {{form.dewey_decimal.label}}
+    {{form.dewey_decimal()}}
+    {% for error in form.dewey_decimal.errors%}
+        {{error}}
+    {% endfor%}
+    <br />
+    {{form.genre.label}}
+    {{form.genre()}}
+    {% for error in form.genre.errors%}
+        {{error}}
+    {% endfor%}
+    <br />
+    {{form.location.label}}
+    {{form.location()}}
+    {% for error in form.location.errors%}
+        {{error}}
+    {% endfor%}
+    <br />
+    {{form.checked_out.label}}
+    {{form.checked_out()}}
+    <br />
+    {{form.restricted.label}}
+    {{form.restricted()}}
+    {% for error in form.restricted.errors%}
+        {{error}}
+    {% endfor%}
+    <br />
+    {{form.description.label}}
+    {{form.description()}}
+    <br />
+    {{form.user_id.label}}
+    {{form.user_id()}}
+    <br />
+    {{form.submit.label}}
+    {{form.submit()}}
+
+
+</form>
+
+<p>{{message}}</p>
+
+
+
+
+{% endblock%}

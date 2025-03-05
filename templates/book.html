@@ -1,0 +1,49 @@
+{% extends 'base.html'%} 
+
+{% block main_content%}
+
+    <h1>{{book['title']}} </h1>
+    <p>
+        {{book['title']}} by {{book['author']}}
+    </p>
+    <p>
+        {{book['description']}}
+    </p>
+    <p>
+        {{book['title']}} belongs to the {{book['genre']}} genre.
+    </p>
+    <ul>
+        <li>ID: {{book['book_id']}} </li>
+        <li>Dewey Decimal Number: {{book['dewey_decimal']}} </li>
+        <li>Location: {{book['location']}} </li>
+            
+        {% if restricted == 'No'%}
+            <li>Currently checked out: {{checkedOut}} </li>
+        {% endif%}
+        <li>Restricted: {{restricted}} </li>
+    </ul>
+
+    {% if restricted == 'No'%}
+        {% if checkedOut == 'Yes'%}
+            <p>This book is currently checked out by another member of
+            the library.
+            </p>
+            <p>Please click <a href="{{url_for('request_book', book_id=book['book_id'])}}">Here</a> to request this book. 
+                The book will then be available to checkout within a week.
+            </p>
+            <p>
+                Else, please click <a href="{{url_for('library')}}">Here</a> to return to viewing all books.
+            </p>
+        
+        
+        {% else%}
+            <p>
+                <a href="{{url_for('add_to_cart', book_id=book['book_id'])}}">Add to cart for online checkout!</a>
+            </p>
+        {% endif%}
+    {% else%}
+    <p>Restricted books must remain on library premises and cannot be checked out.</p>
+    <p>Please click <a href="{{url_for('library')}}">Here</a> to return to viewing all books.</p>
+
+    {% endif%}
+{% endblock%}

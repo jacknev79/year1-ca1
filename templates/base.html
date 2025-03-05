@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="uft-8" />
+        <title>{{ title }}</title>
+        <link rel="stylesheet" href="{url_for}" />
+    </head>
+    <body>
+        <header>
+            {{title}}
+        </header>
+        <main>
+            {% block main_content%}
+
+
+            {% endblock%}
+        </main>
+    </body>
+
+
+</html>
