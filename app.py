@@ -59,6 +59,7 @@ def book(book_id):
 @app.route('/cart')
 @login_required
 def cart():
+    form = CheckoutForm()
     if 'cart' not in session:
         session['cart'] = {}
         session.modified = True
@@ -70,7 +71,9 @@ def cart():
                           WHERE book_id = ?''', (book_id,)).fetchone()
         title = book['title']
         titles[book_id] = title
-    return render_template('cart.html', cart= session["cart"])
+    if form.validate_on_submit():
+        return redirect(url_for('checkout'))
+    return render_template('cart.html', cart= session["cart"], form=form)
 
 #might delete quantity???
 @app.route('/add_to_cart/<int:book_id>')
@@ -322,4 +325,4 @@ def checkout():
         session.modified = True
         return redirect(url_for('library'))
 
-    return render_template('checkout.html', form=form, cart = session['cart'])
+    return render_template('cart.html', form=form, cart = session['cart'])

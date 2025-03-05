@@ -11,8 +11,17 @@
                 </tr>
             {% endfor%}
         </table>
+
+    
+        <form action="{{url_for('checkout')}}" method="POST" novalidate>
+            {{form.hidden_tag()}}
+            
+            {{form.submit()}}
+
+
+        </form>
     {% else%}
         <p>Cart is empty</p>
     {% endif%}
-        <a href="{{url_for('checkout')}}">Click here to checkout!</a>
+        
 {% endblock%}
