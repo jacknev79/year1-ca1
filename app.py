@@ -1,6 +1,6 @@
 from flask import Flask, render_template, session, redirect, url_for, g, request
 from flask_session import Session
-from forms import LoginForm, RegistrationForm, RequestForm, AdminForm, AddBookForm, RemoveBookForm, CheckoutForm
+from forms import LoginForm, RegistrationForm, RequestForm, ReturnForm, AddBookForm, RemoveBookForm, CheckoutForm
 from database import get_db, close_db
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -363,9 +363,60 @@ def checkout():
 
     return render_template('cart.html', form=form, cart = session['cart'])
 
-@app.route('/return_book')
-def return_book():
+@app.route('/return_books', methods=["GET","POST"])
+@login_required
+def return_books():
+    form = ReturnForm()
+    db = get_db()
+    
+    if form.validate_on_submit():
+        book_ids = []
+        book_id1 = form.book_id.data
+        book_id2 = form.book_id2.data
+        
+        book_ids.append(book_id1)
+        book_ids.append(book_id2)
+        #book_ids.append(book_id3)
+        print(book_ids)
+        for book_id in book_ids:
+            if book_id is not None:
+                db.execute('''UPDATE books SET checked_out = 0, requested = 0
+                            WHERE book_id = ?''',(book_id,))
+                db.execute('''UPDATE checkout SET is_returned = 1
+                            WHERE book_id = ? AND is_returned = 0''',(book_id,))
+                db.commit()
+        return redirect(url_for('library'))
+    else: print(form.errors)
+    
+    return render_template('return_book.html', form=form)
+
+@app.route('/return_book/<int:book_id>', methods=["GET","POST"])
+@login_required
+def return_book(book_id):
+    
+    db = get_db()
+    if book_id is not None:
+        db.execute('''UPDATE books SET checked_out = 0, requested = 0
+                   WHERE book_id = ?''',(book_id,))
+        db.execute('''UPDATE checkout SET is_returned = 1
+                   WHERE book_id = ? AND is_returned = 0''',(book_id,))
+        db.commit()
+        
+    
+        #return redirect(url_for('library'))
+    
+    return redirect(url_for('return_books'))
+    
+    
 
 
+@app.route('/extend_date/<int:book_id>')
+@login_required
+def extend_date(book_id):
 
     return
+
+
+#todo: change userid, change password, remember me functionality, remote checkout(admin_required), 
+# is late checking function (decorator????, can then execute before return route), extend date route
+#need update book.html so that checks if book is checked out by session['user_id], if is add functionality

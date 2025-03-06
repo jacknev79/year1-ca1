@@ -1,0 +1,29 @@
+{% extends 'base.html'%}
+
+{% block main_content%}
+<p>Please enter the ids of any other books you wish to return.</p>
+<p>If you do not wish to return any other books, please click
+    <a href="{{url_for('library')}}">Here</a>.
+</p>
+    <form action="" method="POST" novalidate>
+        {{form.hidden_tag()}}
+        {{form.book_id.label}}
+        {{form.book_id()}}
+        {% for error in form.book_id.errors%}
+            {{error}}
+        {% endfor%}
+        <br />
+        {{form.book_id2.label}}
+        {{form.book_id2()}}
+        {% for error in form.book_id2.errors%}
+            {{error}}
+        {% endfor%}
+        
+        <br />
+        {{form.submit()}}
+
+
+    </form>
+
+
+{% endblock%}

@@ -22,11 +22,6 @@ class RequestForm(FlaskForm):
     book_id = StringField('ID of any other book you wish to request:', validators=[InputRequired()])
     submit = SubmitField()
 
-class AdminForm(FlaskForm):
-    admin_id = StringField('Admin Login:')
-    admin_password = PasswordField('Password: ')
-    submit = SubmitField('Login', validators=[])
-
 class AddBookForm(FlaskForm):
     title = StringField('Title:', validators=[InputRequired()])
     author = StringField('Author:', validators=[InputRequired()])
@@ -47,4 +42,9 @@ class RemoveBookForm(FlaskForm):
 class CheckoutForm(FlaskForm):
     submit = SubmitField('Checkout')
 
+class ReturnForm(FlaskForm):
+    book_id = IntegerField('ID of book to be returned:', validators=[InputRequired()])
+    book_id2 = IntegerField('ID of second book to be returned:', validators=[InputRequired()])
+
+    submit = SubmitField('Return Books')
 
