@@ -11,9 +11,12 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField()
 
 class LoginForm(FlaskForm):
-    user_id = StringField("User_id:", validators=[InputRequired()])
-    password = PasswordField('Password:', validators=[InputRequired()])
-    submit = SubmitField()
+    user_id = StringField("User_id:", validators=[])
+    password = PasswordField('Password:', validators=[])
+    submit1 = SubmitField('Login')
+    admin_id = StringField('Admin Login:')
+    admin_password = PasswordField('Admin Password: ')
+    submit2 = SubmitField('Admin Login', validators=[])
 
 class RequestForm(FlaskForm):
     book_id = StringField('ID of any other book you wish to request:', validators=[InputRequired()])
@@ -22,6 +25,7 @@ class RequestForm(FlaskForm):
 class AdminForm(FlaskForm):
     admin_id = StringField('Admin Login:')
     admin_password = PasswordField('Password: ')
+    submit = SubmitField('Login', validators=[])
 
 class AddBookForm(FlaskForm):
     title = StringField('Title:', validators=[InputRequired()])

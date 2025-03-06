@@ -17,12 +17,21 @@ Session(app)
 @app.before_request
 def load_logged_in_user():
     g.user = session.get('user_id', None)
+    g.admin = session.get('admin_id', None)
 
 def login_required(view):
     @wraps(view)
     def wrapped_view(*args, **kwargs):
         if g.user is None:
             return redirect(url_for('login', next=request.url))
+        return view(*args, **kwargs)
+    return wrapped_view
+
+def admin_required(view):
+    @wraps(view)
+    def wrapped_view(*args, **kwargs):
+        if g.admin is None:
+            return redirect(url_for('admin_login', next=request.url))
         return view(*args, **kwargs)
     return wrapped_view
 
@@ -117,25 +126,50 @@ def login():
     if form.validate_on_submit():
         user_id = form.user_id.data
         password = form.password.data
-        db = get_db()
-        user_in_db = db.execute('''SELECT user_id, password FROM users
-                                WHERE user_id = ?;''',(user_id,)).fetchone()
-        
-        if user_in_db is None:
-            form.user_id.errors.append('Username does not exist.')
+        if user_id != '' or password !='':
+            db = get_db()
+            user_in_db = db.execute('''SELECT user_id, password FROM users
+                                    WHERE user_id = ?;''',(user_id,)).fetchone()
+            
+            if user_in_db is None:
+                form.user_id.errors.append('Username does not exist.')
 
-        elif not check_password_hash(user_in_db['password'], password):
-            form.password.errors.append('Incorrect password.')
+            elif not check_password_hash(user_in_db['password'], password):
+                form.password.errors.append('Incorrect password.')
 
+            else:
+                session.clear()
+                session['user_id'] = user_id
+                session.modified = True
+                next_page = request.args.get('next')
+                if not next_page:
+                    next_page = url_for('index')
+                return redirect(next_page)
         else:
-            session.clear()
-            session['user_id'] = user_id
-            session.modified = True
-            next_page = request.args.get('next')
-            if not next_page:
-                next_page = url_for('index')
-            return redirect(next_page)
+            return redirect(url_for('admin_login'))
         
+    return render_template('login.html', form=form)
+
+@app.route('/admin', methods=["GET","POST"]) 
+def admin_login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        admin_id = form.admin_id.data
+        admin_password = form.admin_password.data
+
+        if admin_id == 'admin':
+            if admin_password == 'password':
+                session.clear()
+                session['admin_id'] =  admin_id
+                session.modified = True
+                next_page = request.args.get('next')
+                if not next_page:
+                    next_page = url_for('index')
+                return redirect(next_page)
+            else:
+                form.submit2.errors.append('Wrong ID or Password. Did you mean to login as user?')
+        else:
+            form.submit2.errors.append('Wrong ID or Password. Did you mean to login as user?')
     return render_template('login.html', form=form)
 
 @app.route('/logout')
@@ -233,6 +267,7 @@ def request_book(book_id):
     return render_template('request_book.html', form = form, message = message, book_id = book_id)
 
 @app.route('/add_book', methods = ["GET","POST"])
+@admin_required
 def add_book():
     message = ''
     title = ''
@@ -285,6 +320,7 @@ def add_book():
     return render_template('add_book.html', form=form, message=message)
 
 @app.route('/remove_book', methods=["GET","POST"])
+@admin_required
 def remove_book():
     form = RemoveBookForm()
 
@@ -326,3 +362,10 @@ def checkout():
         return redirect(url_for('library'))
 
     return render_template('cart.html', form=form, cart = session['cart'])
+
+@app.route('/return_book')
+def return_book():
+
+
+
+    return

@@ -1,7 +1,7 @@
 {% extends 'base.html'%}
 
 {% block main_content%}
-    <form action="" method="POST" novalidate>
+    <form action="{{url_for('login')}}" method="POST" novalidate>
         {{ form.hidden_tag()}}
         {{ form.user_id.label}}
         {{ form.user_id()}}
@@ -18,10 +18,20 @@
 
         {% endfor%}
         <br />
-        {{form.submit()}}
-
-
-
+        {{form.submit1()}}
+    </form>
+    <form action="{{url_for('admin_login')}}" method="POST" novalidate>
+        {{form.hidden_tag()}}
+        {{form.admin_id.label}}
+        {{form.admin_id()}}
+        <br />
+        {{form.admin_password.label}}
+        {{form.admin_password()}}
+        <br />
+        {{form.submit2()}}
+        {% for error in form.submit2.errors%}
+            {{error}}
+        {% endfor%}
     </form>
 
 
