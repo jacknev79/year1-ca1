@@ -1,6 +1,6 @@
 from flask import Flask, render_template, session, redirect, url_for, g, request
 from flask_session import Session
-from forms import LoginForm, RegistrationForm, RequestForm, ReturnForm, AddBookForm, RemoveBookForm, CheckoutForm
+from forms import LoginForm, RegistrationForm, RequestForm, ReturnForm, AddBookForm, RemoveBookForm, CheckoutForm, ChangeIdForm, ChangePasswordForm
 from database import get_db, close_db
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -141,8 +141,9 @@ def login():
                 session.clear()
                 session['user_id'] = user_id
                 session.modified = True
-                next_page = request.args.get('next')
-                if not next_page:
+                next_page = request.form.get('next')        #request.args.get()   needs fixing in login, admin
+                print(next_page)
+                if next_page is None:
                     next_page = url_for('index')
                 return redirect(next_page)
         else:
@@ -213,11 +214,11 @@ def request_book(book_id):
         book_id = form.book_id.data 
         db = get_db()
         book = db.execute('''SELECT * FROM books
-                WHERE book_id = ?''',(book_id,)).fetchone()
+                WHERE book_id = ?;''',(book_id,)).fetchone()
         
         if book['requested'] is not None:
             checkout = db.execute('''SELECT * FROM checkout
-                                  WHERE book_id = ? AND is_returned = 0''', (book_id,)).fetchone()
+                                  WHERE book_id = ? AND is_returned = 0;''', (book_id,)).fetchone()
             new_return_date = checkout['return_date']
             message = 'This book has already been requested. It will be available for checkout before: ' + new_return_date
            
@@ -241,7 +242,7 @@ def request_book(book_id):
         if book_id is not None:
             db = get_db()
             book = db.execute('''SELECT * FROM books
-                WHERE book_id = ?''', (book_id,)).fetchone()
+                WHERE book_id = ?;''', (book_id,)).fetchone()
         
             if book['checked_out'] == 1 and book['requested'] != 'Yes':
                 
@@ -259,7 +260,7 @@ def request_book(book_id):
                 message = 'This request has been received and processed. The book should be available for checkout before: ' + new_return_date
             else:
                 checkout = db.execute('''SELECT * FROM checkout
-                                  WHERE book_id = ? AND is_returned = 0''', (book_id,)).fetchone()
+                                  WHERE book_id = ? AND is_returned = 0;''', (book_id,)).fetchone()
                 new_return_date = checkout['return_date']
                 message = 'This book has already been requested. It will be available for checkout before: ' + new_return_date
         
@@ -303,13 +304,13 @@ def add_book():
                             VALUES (?,?,?,?,?,?,?,?);''', (title,author,dewey_decimal,genre,location,checked_out,restricted,description))
                 db.commit()
                 if checked_out == 1:
-                    book = db.execute('''SELECT MAX(book_id) FROM books''').fetchone()
+                    book = db.execute('''SELECT MAX(book_id) FROM books;''').fetchone()
                     
 
                     today_date = date.today()
                     return_date = str(today_date + timedelta(days=28))
                     db.execute('''INSERT INTO checkout (user_id, book_id, date_checked_out, return_date, extensions, is_returned,is_late)
-                            VALUES (?,?,?,?,?,?,?)''',(user_id, book['max(book_id)'], today_date, return_date, 0, 0, 0))
+                            VALUES (?,?,?,?,?,?,?);''',(user_id, book['max(book_id)'], today_date, return_date, 0, 0, 0))
                 db.commit()
                 #message = 'Book successfully submitted.'
             return redirect(url_for('library'))
@@ -330,7 +331,7 @@ def remove_book():
             book_id = form.book_id.data
             db = get_db()
             db.execute('''DELETE FROM books 
-                    WHERE book_id = ?''',(book_id,))
+                    WHERE book_id = ?;''',(book_id,))
             db.commit()
 
             return redirect(url_for('library'))
@@ -349,12 +350,12 @@ def checkout():
         if 'cart' in session:
             for book_id in session['cart']:
                 book = db.execute('''SELECT * FROM books
-                        WHERE book_id = ?''',(book_id,)).fetchone()
+                        WHERE book_id = ?;''',(book_id,)).fetchone()
                 if book['checked_out'] == 0:
                     db.execute('''UPDATE books SET checked_out = 1, requested = 0
-                        WHERE book_id = ?''',(book_id,))
+                        WHERE book_id = ?;''',(book_id,))
                     db.execute('''INSERT INTO checkout (user_id, book_id, date_checked_out, return_date, extensions, is_returned,is_late)
-                                    VALUES (?,?,?,?,?,?,?)''',(session['user_id'], book_id, today_date, return_date, 0, 0, 0))
+                                    VALUES (?,?,?,?,?,?,?);''',(session['user_id'], book_id, today_date, return_date, 0, 0, 0))
                     db.commit()
     if 'cart' not in session or form.validate_on_submit():
         session['cart'] = {}
@@ -381,9 +382,9 @@ def return_books():
         for book_id in book_ids:
             if book_id is not None:
                 db.execute('''UPDATE books SET checked_out = 0, requested = 0
-                            WHERE book_id = ?''',(book_id,))
+                            WHERE book_id = ?;''',(book_id,))
                 db.execute('''UPDATE checkout SET is_returned = 1
-                            WHERE book_id = ? AND is_returned = 0''',(book_id,))
+                            WHERE book_id = ? AND is_returned = 0;''',(book_id,))
                 db.commit()
         return redirect(url_for('library'))
     else: print(form.errors)
@@ -397,9 +398,9 @@ def return_book(book_id):
     db = get_db()
     if book_id is not None:
         db.execute('''UPDATE books SET checked_out = 0, requested = 0
-                   WHERE book_id = ?''',(book_id,))
+                   WHERE book_id = ?;''',(book_id,))
         db.execute('''UPDATE checkout SET is_returned = 1
-                   WHERE book_id = ? AND is_returned = 0''',(book_id,))
+                   WHERE book_id = ? AND is_returned = 0;''',(book_id,))
         db.commit()
         
     
@@ -407,9 +408,41 @@ def return_book(book_id):
     
     return redirect(url_for('return_books'))
     
-    
+@app.route('/change_user_id', methods=["GET","POST"])
+@admin_required
+def change_user_id():
+    form = ChangeIdForm()
+    db = get_db()
 
+    if form.validate_on_submit():
+        past_id = form.past_id.data
+        new_id = form.new_id.data
 
+        user = db.execute('''SELECT * FROM users
+                          WHERE user_id= ?;''',(past_id,)).fetchone()
+        if user is not None:
+            db.execute('''UPDATE users SET user_id = ?
+                       WHERE user_id = ?;''',(new_id,past_id))
+            db.commit()
+
+            
+        else: form.past_id.errors.append('This user does not exist.')
+
+    return render_template('change_id.html', form=form)
+
+@app.route('/change_password', methods=["GET","POST"])      #need admin required function called 
+                                                            #admin_change_password, remote change with user_id form
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    db = get_db()
+
+    if form.validate_on_submit():
+        old_password = check_password_hash(form.old_password.data)
+        new_password = form.new_password.data
+
+        password = db.execute('''SELECT * FROM users 
+                              WHERE''')
 @app.route('/extend_date/<int:book_id>')
 @login_required
 def extend_date(book_id):

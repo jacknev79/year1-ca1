@@ -48,3 +48,14 @@ class ReturnForm(FlaskForm):
 
     submit = SubmitField('Return Books')
 
+class ChangeIdForm(FlaskForm):
+    past_id = StringField('Old ID of user to be changed:',validators=[InputRequired()])
+    new_id = StringField('New user_id:', validators=[InputRequired()])
+    new_id2 = StringField('Please reenter user_id:', validators=[InputRequired(), EqualTo('new_id')])
+    submit = SubmitField('Change ID')
+
+class ChangePasswordForm(FlaskForm):
+    old_password = StringField('Previous Password:', validators=[InputRequired()])
+    new_password = StringField('New Password', validators=[InputRequired()])
+    new_password2 = StringField('Please reenter your password', validators=[InputRequired(), EqualTo('new_password')])
+    submit = SubmitField('Change Password')
