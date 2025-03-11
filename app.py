@@ -4,8 +4,14 @@ from forms import LoginForm, RegistrationForm, RequestForm, ReturnForm, AddBookF
 from database import get_db, close_db
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+'''
+admin_id = admin, admin_password = password
 
+
+
+
+'''
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'LKmfRPwipKUmgzbrYYHYLCdf'
 app.config['SESSION_PERMANENT'] = False
@@ -37,7 +43,6 @@ def admin_required(view):
 
 @app.route('/')
 def index():
-
 
     return render_template('index.html')
 
@@ -84,7 +89,6 @@ def cart():
         return redirect(url_for('checkout'))
     return render_template('cart.html', cart= session["cart"], form=form)
 
-#might delete quantity???
 @app.route('/add_to_cart/<int:book_id>')
 @login_required
 def add_to_cart(book_id):
@@ -207,7 +211,6 @@ def request_book(book_id):
     
     #can change so that checks also if requested flag already set to yes, if is then does not db.commit
     form = RequestForm()
-
     message = ''
     if form.validate_on_submit():
 
@@ -280,40 +283,40 @@ def add_book():
     restricted = 0
     description= ''
     user_id = ''
-    if True:       #need is_admin function/ decorator
-        form = AddBookForm()
-        if form.validate_on_submit():
-            
-            title = form.title.data
-            author = form.author.data
-            dewey_decimal = form.dewey_decimal.data
-            genre = form.genre.data
-            location = form.location.data
-            checked_out = form.checked_out.data
-            restricted = form.restricted.data
-            description= form.description.data 
-            user_id = form.user_id.data
+    
+    form = AddBookForm()
+    if form.validate_on_submit():
+        
+        title = form.title.data
+        author = form.author.data
+        dewey_decimal = form.dewey_decimal.data
+        genre = form.genre.data
+        location = form.location.data
+        checked_out = form.checked_out.data
+        restricted = form.restricted.data
+        description= form.description.data 
+        user_id = form.user_id.data
 
-            if checked_out == 1 and restricted == 1:
-                form.restricted.errors.append('Restricted books cannot be checked out.')
-                return render_template('add_book.html', form=form)
-            
-            else:
-                db = get_db()
-                db.execute('''INSERT INTO books (title, author, dewey_decimal, genre, location, checked_out, restricted, description)
-                            VALUES (?,?,?,?,?,?,?,?);''', (title,author,dewey_decimal,genre,location,checked_out,restricted,description))
-                db.commit()
-                if checked_out == 1:
-                    book = db.execute('''SELECT MAX(book_id) FROM books;''').fetchone()
-                    
+        if checked_out == 1 and restricted == 1:
+            form.restricted.errors.append('Restricted books cannot be checked out.')
+            return render_template('add_book.html', form=form)
+        
+        else:
+            db = get_db()
+            db.execute('''INSERT INTO books (title, author, dewey_decimal, genre, location, checked_out, restricted, description)
+                        VALUES (?,?,?,?,?,?,?,?);''', (title,author,dewey_decimal,genre,location,checked_out,restricted,description))
+            db.commit()
+            if checked_out == 1:
+                book = db.execute('''SELECT MAX(book_id) FROM books;''').fetchone()
+                
 
-                    today_date = date.today()
-                    return_date = str(today_date + timedelta(days=28))
-                    db.execute('''INSERT INTO checkout (user_id, book_id, date_checked_out, return_date, extensions, is_returned,is_late)
-                            VALUES (?,?,?,?,?,?,?);''',(user_id, book['max(book_id)'], today_date, return_date, 0, 0, 0))
-                db.commit()
-                #message = 'Book successfully submitted.'
-            return redirect(url_for('library'))
+                today_date = date.today()
+                return_date = str(today_date + timedelta(days=28))
+                db.execute('''INSERT INTO checkout (user_id, book_id, date_checked_out, return_date, extensions, is_returned,is_late)
+                        VALUES (?,?,?,?,?,?,?);''',(user_id, book['max(book_id)'], today_date, return_date, 0, 0, 0))
+            db.commit()
+            #message = 'Book successfully submitted.'
+        return redirect(url_for('library'))
 
     # else:
     #     message = 'You do not have permission to view this page.'
@@ -323,19 +326,15 @@ def add_book():
 @app.route('/remove_book', methods=["GET","POST"])
 @admin_required
 def remove_book():
-    form = RemoveBookForm()
+    form = RemoveBookForm()    
+    if form.validate_on_submit():
+        book_id = form.book_id.data
+        db = get_db()
+        db.execute('''DELETE FROM books 
+                WHERE book_id = ?;''',(book_id,))
+        db.commit()
 
-
-    if True:        #admin needed
-        if form.validate_on_submit():
-            book_id = form.book_id.data
-            db = get_db()
-            db.execute('''DELETE FROM books 
-                    WHERE book_id = ?;''',(book_id,))
-            db.commit()
-
-            return redirect(url_for('library'))
-
+        return redirect(url_for('library'))
 
     return render_template('remove_book.html', form=form)
 
@@ -369,6 +368,7 @@ def checkout():
 def return_books():
     form = ReturnForm()
     db = get_db()
+    today_date = datetime.today()
     
     if form.validate_on_submit():
         book_ids = []
@@ -377,35 +377,50 @@ def return_books():
         
         book_ids.append(book_id1)
         book_ids.append(book_id2)
-        #book_ids.append(book_id3)
-        print(book_ids)
+
         for book_id in book_ids:
             if book_id is not None:
+                book = db.execute('''SELECT * FROM checkout
+                                WHERE book_id = ? AND is_returned = 0;''',(book_id,)).fetchone()
+                check = datetime.strptime(book['return_date'], '%Y-%m-%d')
+
+                if check < today_date:
+                    db.execute('''UPDATE checkout SET is_late = 1
+                           WHERE checkout_id = ?;''',(book['checkout_id'],))
+                    db.execute('''UPDATE users SET has_late_fees = 1
+                               WHERE user_id =?;''',(session['user_id'],))
                 db.execute('''UPDATE books SET checked_out = 0, requested = 0
                             WHERE book_id = ?;''',(book_id,))
                 db.execute('''UPDATE checkout SET is_returned = 1
-                            WHERE book_id = ? AND is_returned = 0;''',(book_id,))
+                            WHERE checkout_id = ?;''',(book['checkout_id'],))
                 db.commit()
+
         return redirect(url_for('library'))
-    else: print(form.errors)
     
     return render_template('return_book.html', form=form)
 
 @app.route('/return_book/<int:book_id>', methods=["GET","POST"])
 @login_required
 def return_book(book_id):
-    
+    today_date = datetime.today()
     db = get_db()
+
+    book = db.execute('''SELECT * FROM checkout
+                      WHERE book_id = ? AND is_returned = 0;''',(book_id,)).fetchone()
     if book_id is not None:
+        check = datetime.strptime(book['return_date'], '%Y-%m-%d')
+        if check < today_date:
+             if check < today_date:
+                    db.execute('''UPDATE checkout SET is_late = 1
+                           WHERE checkout_id = ?;''',(book['checkout_id'],))
+                    db.execute('''UPDATE users SET has_late_fees = 1
+                               WHERE user_id =?;''',(session['user_id'],))
         db.execute('''UPDATE books SET checked_out = 0, requested = 0
                    WHERE book_id = ?;''',(book_id,))
         db.execute('''UPDATE checkout SET is_returned = 1
-                   WHERE book_id = ? AND is_returned = 0;''',(book_id,))
+                   WHERE checkout_id =?;''',(book['checkout_id'],))    
         db.commit()
         
-    
-        #return redirect(url_for('library'))
-    
     return redirect(url_for('return_books'))
     
 @app.route('/change_user_id', methods=["GET","POST"])
@@ -425,7 +440,6 @@ def change_user_id():
                        WHERE user_id = ?;''',(new_id,past_id))
             db.commit()
 
-            
         else: form.past_id.errors.append('This user does not exist.')
 
     return render_template('change_id.html', form=form)
@@ -438,7 +452,6 @@ def change_password():
     if 'user_id' in session:
         if form.validate_on_submit():
             old_password = form.old_password.data
-            
             new_password = form.new_password.data
             new_password = generate_password_hash(new_password)
 
@@ -505,7 +518,36 @@ def extend_date(book_id):
     
     return render_template('extension.html', message = message, check= check, book = book, book_title = title['title'])
 
+@app.route('/my_account')
+@login_required
+def my_account():
+    db = get_db()
+    user = db.execute('''SELECT * FROM users
+                      WHERE user_id =?;''',(session['user_id'],)).fetchone()
 
-#todo: remember me functionality, remote checkout(admin_required), finish admin password changer route
-# is late checking function (decorator????, can then execute before return route)
+
+    return render_template('my_account.html', user=user)
+
+@app.route('/late_fees')
+def late_fees():
+
+    late_fees = 0
+    fee = 2
+    db = get_db()
+    books = db.execute('''SELECT * FROM checkout
+                       WHERE user_id = ? AND is_late = 1;''',(session['user_id'],)).fetchall()
+    for book in books:
+        return_date = datetime.strptime(book['return_date'], '%Y-%m-%d')
+        late_date = (datetime.strptime(book['date_checked_out'], '%Y-%m-%d')+ timedelta(days=28))
+        difference = return_date - late_date
+        difference = difference.days
+
+        late_fees += int(difference) * fee
+    user = db.execute('''SELECT * FROM users
+                      WHERE user_id =?;''',(session['user_id'],)).fetchone()
+
+    return render_template('my_account.html', late_fees = late_fees, user = user)
+
+#todo: remember me functionality, remote checkout(admin_required)
 #need update book.html so that checks if book is checked out by session['user_id], if is add functionality
+#need populate database with sensible data (NB return date is 28 days after checkout)

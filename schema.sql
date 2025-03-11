@@ -52,16 +52,17 @@ VALUES
 
 INSERT INTO checkout (user_id, book_id, date_checked_out, return_date, extensions, is_returned,is_late)
 VALUES
+    ('testing', 3, '2025-02-08', '2025-03-11', 0, 0,1),
     ('tester', 5678, '2025-01-01', '2025-02-02', 0, 0,0),
-    ('tester', 3, '2025-02-20', '2025-03-20', 0, 0,0),
+    ('tester', 3, '2025-02-20', '2025-03-09', 0, 0,0),
     ('tester', 3, '2025-02-20', '2025-03-20', 0, 1,0),
     ('test', 3, '2025-02-20', '2025-03-19', 0, 1,0)
 
 
 ;
+UPDATE checkout SET return_date = '2025-03-09'
+WHERE checkout_id = 5;
 
 select * from books;
 select * from checkout;
 select* from users;
-
-

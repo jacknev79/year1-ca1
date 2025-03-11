@@ -1,0 +1,17 @@
+{% extends 'base.html'%}
+
+{% block main_content%}
+
+
+<table>
+    <tr>
+        <td>{{user['user_id']}} </td>
+        <td>{{user['date_registered']}} </td>
+        <td>{{user['has_late_fees']}} </td>
+    </tr>
+</table>
+
+    <p>{{late_fees}}</p>
+
+
+{% endblock%}
