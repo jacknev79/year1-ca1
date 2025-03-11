@@ -430,19 +430,56 @@ def change_user_id():
 
     return render_template('change_id.html', form=form)
 
-@app.route('/change_password', methods=["GET","POST"])      #need admin required function called 
-                                                            #admin_change_password, remote change with user_id form
-@login_required
+@app.route('/change_password', methods=["GET","POST"])                                                    
 def change_password():
     form = ChangePasswordForm()
     db = get_db()
+    admin = False
+    if 'user_id' in session:
+        if form.validate_on_submit():
+            old_password = form.old_password.data
+            
+            new_password = form.new_password.data
+            new_password = generate_password_hash(new_password)
 
-    if form.validate_on_submit():
-        old_password = check_password_hash(form.old_password.data)
-        new_password = form.new_password.data
+            password = db.execute('''SELECT * FROM users 
+                            WHERE user_id =?;''',(session['user_id'],)).fetchone()
+            if check_password_hash(password['password'],old_password):
+                db.execute('''UPDATE users SET password = ?
+                            WHERE user_id = ?''',(new_password, session['user_id']))
+                db.commit()
+                
+                session.clear()
+                session.modified = True
+                return redirect(url_for('login'))
+            else: 
+                form.old_password.errors.append('Password is not linked to this account. Please contact an admin.')
+        print(form.errors)
+    elif 'admin_id' in session:
+        admin = True
+        if form.validate_on_submit():
+            
+            user_id = form.user_id.data
+            new_password =form.new_password.data
+            new_password = generate_password_hash(new_password)
+            user = db.execute('''SELECT * FROM users
+                            WHERE user_id = ?;''',(user_id,)).fetchone()
+            
+            if user is not None:
+                    print('t')
+                    db.execute('''UPDATE users SET password = ?
+                                    WHERE user_id =?;''',(new_password,user_id))
+                    if user['user_id'] == user_id:    
+                        db.commit()
+                    else:
+                        form.user_id.errors.append('This user does not match any in the database.')
+            else:
+                form.user_id.errors.append('This user does not match any in the database.')
 
-        password = db.execute('''SELECT * FROM users 
-                              WHERE''')
+    else: 
+        return redirect(url_for('login'))
+    return render_template('change_password.html', form=form, admin = admin)
+            
 @app.route('/extend_date/<int:book_id>')
 @login_required
 def extend_date(book_id):
@@ -469,6 +506,6 @@ def extend_date(book_id):
     return render_template('extension.html', message = message, check= check, book = book, book_title = title['title'])
 
 
-#todo: change userid, change password, remember me functionality, remote checkout(admin_required), 
-# is late checking function (decorator????, can then execute before return route), extend date route
+#todo: remember me functionality, remote checkout(admin_required), finish admin password changer route
+# is late checking function (decorator????, can then execute before return route)
 #need update book.html so that checks if book is checked out by session['user_id], if is add functionality

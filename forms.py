@@ -55,7 +55,8 @@ class ChangeIdForm(FlaskForm):
     submit = SubmitField('Change ID')
 
 class ChangePasswordForm(FlaskForm):
-    old_password = StringField('Previous Password:', validators=[InputRequired()])
+    user_id = StringField('Please enter the id of user who requested password change:', validators=[])
+    old_password = StringField('Previous Password:', validators=[])
     new_password = StringField('New Password', validators=[InputRequired()])
     new_password2 = StringField('Please reenter your password', validators=[InputRequired(), EqualTo('new_password')])
     submit = SubmitField('Change Password')
