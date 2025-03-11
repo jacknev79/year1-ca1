@@ -446,8 +446,27 @@ def change_password():
 @app.route('/extend_date/<int:book_id>')
 @login_required
 def extend_date(book_id):
+    today_date = date.today()
+    return_date = str(today_date + timedelta(days=28))
+    message = ''
+    check = True
+    db = get_db()
+    title = db.execute('''SELECT title FROM books
+                       WHERE book_id = ?;''',(book_id,)).fetchone()
 
-    return
+    book= db.execute('''SELECT * FROM checkout 
+                     WHERE book_id=? AND is_returned = 0;''',(book_id,)).fetchone()
+    if book is not None:
+        db.execute('''UPDATE checkout SET return_date = ?, extensions = ?
+                   WHERE book_id = ? AND is_returned = 0;''',(return_date, book['extensions']+1,book_id))
+        if book['extensions'] < 6:
+            db.commit()
+        else: 
+            check = False
+            message = '''You have requested an extension 6 times already. This is the max allowed per checkout 
+                    instance. Please return the book to the library by: '''
+    
+    return render_template('extension.html', message = message, check= check, book = book, book_title = title['title'])
 
 
 #todo: change userid, change password, remember me functionality, remote checkout(admin_required), 
