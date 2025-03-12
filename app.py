@@ -58,17 +58,24 @@ def book(book_id):
     db = get_db()
     book = db.execute('''SELECT * FROM books
                       WHERE book_id = ?;''', (book_id,)).fetchone()
+    user_checkedout = db.execute('''SELECT * FROM checkout 
+                               WHERE user_id = ? AND 
+                               book_id = ? AND is_returned = 0;''',(session['user_id'],book_id)).fetchone()
+    if user_checkedout is None:
+        user_checkedout = False
+    else:
+        user_checkedout = True
     if book['checked_out'] == 1:
-        checkedOut = 'Yes'
+        checkedOut = True
 
     else:
-        checkedOut = 'No'
+        checkedOut = False
     if book['restricted'] == 1:
-        restricted = 'Yes'
+        restricted = True
 
     else:
-        restricted = 'No'
-    return render_template('book.html', book = book, checkedOut = checkedOut, 
+        restricted = False
+    return render_template('book.html', book = book, checkedOut = checkedOut, user_checkedout = user_checkedout,
                            restricted = restricted, title =book['title'])
 
 @app.route('/cart')
@@ -517,14 +524,20 @@ def extend_date(book_id):
     return render_template('extension.html', message = message, check= check, book = book, book_title = title['title'],title='Request Extension')
 
 @app.route('/my_account')
-@login_required
 def my_account():
     db = get_db()
-    user = db.execute('''SELECT * FROM users
+    user=False
+    admin = False
+    if 'admin_id' in session:
+        admin =True
+    elif 'user_id' not in session:
+        return redirect(url_for('login'))
+    else:
+        user = db.execute('''SELECT * FROM users
                       WHERE user_id =?;''',(session['user_id'],)).fetchone()
+    
 
-
-    return render_template('my_account.html', user=user, title="My Account")
+    return render_template('my_account.html', user=user, title="My Account", admin=admin)
 
 @app.route('/late_fees', methods=["GET","POST"])
 @login_required

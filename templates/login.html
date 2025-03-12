@@ -20,6 +20,8 @@
         <br />
         {{form.submit1()}}
     </form>
+    <p>Forgot your password? Login as admin <a href="{{url_for('change_password')}}">Here</a> or contact 
+        an admin to change it for you!</p>
 {% endblock%}
 
 {% block aside_content%}
@@ -36,8 +38,5 @@
             {{error}}
         {% endfor%}
     </form>
-
-
-
 
 {% endblock%}

@@ -1,17 +1,36 @@
 {% extends 'base.html'%}
 
 {% block main_content%}
+<nav>
+    {% if admin%}
+    <a href="{{url_for('add_book')}}">Add Books</a>
+    <a href="{{url_for('remove_book')}}">Remove Books</a>
+    <a href="{{url_for('change_user_id')}}">Change User ID</a>
 
+    {% else%}
+    <a href="{{url_for('history')}}">History</a>
+    <a href="{{url_for('checked_out')}}">Currently Checked Out</a>
+    <a href="{{url_for('late_fees')}}">Late fees checker</a>
+    {% endif%}    
+</nav>
 
 <table>
     <tr>
-        <td>{{user['user_id']}} </td>
-        <td>{{user['date_registered']}} </td>
-        <td>{{user['has_late_fees']}} </td>
+        <td>User: {{user['user_id']}} </td>
+    </tr>
+    <tr><td>Date of registration: {{user['date_registered']}} </td>
+    </tr>
+    <tr>
+        {% if user['has_late_fees'] ==1%}
+        <td>Your account has outstanding late fees!</td>
+        {% else%}
+        <td>You have no outstanding late fees at the moment.</td>
+        {% endif%}
     </tr>
 </table>
-
-    
+<p>If you are looking to change your password, please follow the link
+    <a href="{{url_for('change_password')}}">Here</a>.
+</p>
 
 {% if user['has_late_fees'] == 1%}
 <p>Your late fees due are: {{late_fees}}</p>
@@ -20,8 +39,7 @@
     {{form.hidden_tag()}}
     {{form.submit()}}
 </form>
-
-
 {% endif%}
+
 
 {% endblock%}

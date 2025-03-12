@@ -3,7 +3,7 @@
 {% block main_content%}
 {% if book%}
     {% if check%}
-        <p>Your return date for {{book_title}} has been extended. This is extension {{book['extensions']+1}} 
+        <p>Your return date for {{book_title}} has been extended. This is extension number {{book['extensions']+1}} 
             for this checkout instance. </p>
         <p>Your new return date is {{book['return_date']}}. </p>
     {% else%}

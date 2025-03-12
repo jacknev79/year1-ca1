@@ -17,23 +17,32 @@
         <li>Dewey Decimal Number: {{book['dewey_decimal']}} </li>
         <li>Location: {{book['location']}} </li>
             
-        {% if restricted == 'No'%}
+        {% if not restricted%}
             <li>Currently checked out: {{checkedOut}} </li>
         {% endif%}
         <li>Restricted: {{restricted}} </li>
     </ul>
 
-    {% if restricted == 'No'%}
-        {% if checkedOut == 'Yes'%}
-            <p>This book is currently checked out by another member of
-            the library.
-            </p>
-            <p>Please click <a href="{{url_for('request_book', book_id=book['book_id'])}}">Here</a> to request this book. 
-                The book will then be available to checkout within a week.
-            </p>
-            <p>
-                Else, please click <a href="{{url_for('library')}}">Here</a> to return to viewing all books.
-            </p>
+    {% if not restricted%}
+        {% if checkedOut%}
+            {% if user_checkedout%}
+                <p>This book is currently checked out by you! You can return this book by following
+                    <a href="{{url_for('return_book', book_id=book['book_id'] )}}">This Link</a>.
+                </p>
+                <p>You can also request an extension by following
+                    <a href="{{url_for('extend_date', book_id=book['book_id'])}}">This link</a>.
+                </p>
+            {% else%}
+                <p>This book is currently checked out by another member of
+                the library.
+                </p>
+                <p>Please click <a href="{{url_for('request_book', book_id=book['book_id'])}}">Here</a> to request this book. 
+                    The book will then be available to checkout within a week.
+                </p>
+                <p>
+                    Else, please click <a href="{{url_for('library')}}">Here</a> to return to viewing all books.
+                </p>
+            {% endif%}
         
         
         {% else%}

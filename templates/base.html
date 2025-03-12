@@ -9,12 +9,23 @@
         <header>
             <h1>{{title}}</h1>
             {% if 'admin_id' in session or 'user_id' in session%}
+                <p>{{session['user_id']}} </p>
+                <p>{{session['admin_id']}} </p>
+                <a href="{{url_for('my_account')}}">My Account</a>
                 <a href="{{url_for('logout')}}">Logout</a>
             {% else%}
                 <a href="{{url_for('register')}}">Register</a>
                 <a href="{{url_for('login')}}">Login</a>
             {% endif%}
         </header>
+        <nav>
+            <a href="{{url_for('index')}}">Home</a>
+            <a href="{{url_for('library')}}">Library</a>
+
+            <a href="{{url_for('return_books')}}">Return Books</a>          
+            <a href="{{url_for('cart')}}">Cart</a>
+            
+        </nav>
         <main>
             {% block main_content%}
 

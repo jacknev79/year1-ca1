@@ -1,15 +1,33 @@
 html {
-    
     --base-bgcolor: #f1f3f6;
     --main-color: #0b3051;
     --main-bgcolor: #62bbff;
     --accent-color1: #bf3e3b;
     --accent-color2: #006db2;
 }
-header a[href=""] {
-    color: var(--main-color);
+body {
+    background-color: var(--base-bgcolor);
+    color: var(--base-color);
 }
-header a:hover {
+nav{
+    border: 3px solid var(--accent-color2);
+    background-color: var(--main-color);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1em;
+}
+main nav{
+    border: 0px
+}
+main {
+    background-color: var(--main-bgcolor);
+    color: var(--main-color);
+    border: 4px solid var(--accent-color1);
+}
+header a:hover, nav a:hover {
     background-color: var(--main-bgcolor);
 }
 body > header {
@@ -24,8 +42,23 @@ body > header {
     align-items: center;
     flex: 1;
 }
-body > header a {
+body > header a, nav a {
     padding: 0.5em 6.5em;
     text-decoration: none;
+    color: var(--main-color);
     background-color: var(--accent-color2);
+}
+aside{
+    background-color: var(--main-color);
+    color: var(--base-bgcolor);
+}
+header p{
+    display: flex;
+    color: var(--main-color);
+    font-size:x-large;
+}
+header h1{
+    display: block;
+    margin: auto;
+    
 }
