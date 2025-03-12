@@ -1,6 +1,6 @@
 from flask import Flask, render_template, session, redirect, url_for, g, request
 from flask_session import Session
-from forms import LoginForm, RegistrationForm, RequestForm, ReturnForm, AddBookForm, RemoveBookForm, CheckoutForm, ChangeIdForm, ChangePasswordForm
+from forms import LoginForm, RegistrationForm, RequestForm, ReturnForm, AddBookForm, RemoveBookForm, CheckoutForm, ChangeIdForm, ChangePasswordForm, LateFeesForm
 from database import get_db, close_db
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -439,6 +439,7 @@ def change_user_id():
             db.execute('''UPDATE users SET user_id = ?
                        WHERE user_id = ?;''',(new_id,past_id))
             db.commit()
+            return redirect(url_for('login'))
 
         else: form.past_id.errors.append('This user does not exist.')
 
@@ -528,8 +529,10 @@ def my_account():
 
     return render_template('my_account.html', user=user)
 
-@app.route('/late_fees')
+@app.route('/late_fees', methods=["GET","POST"])
+@login_required
 def late_fees():
+    form = LateFeesForm()
 
     late_fees = 0
     fee = 2
@@ -545,8 +548,18 @@ def late_fees():
         late_fees += int(difference) * fee
     user = db.execute('''SELECT * FROM users
                       WHERE user_id =?;''',(session['user_id'],)).fetchone()
+    if form.validate_on_submit():
+        db.execute('''UPDATE users SET has_late_fees = 0
+                   WHERE user_id =?;''',(session['user_id'],))
+        db.commit()
+        return redirect(url_for('payment'))
 
-    return render_template('my_account.html', late_fees = late_fees, user = user)
+    return render_template('my_account.html', late_fees = late_fees, user = user, form=form)
+
+@app.route('/payment')
+@login_required
+def payment():
+    return render_template('payment.html')
 
 #todo: remember me functionality, remote checkout(admin_required)
 #need update book.html so that checks if book is checked out by session['user_id], if is add functionality

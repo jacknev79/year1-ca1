@@ -11,7 +11,17 @@
     </tr>
 </table>
 
-    <p>{{late_fees}}</p>
+    
 
+{% if user['has_late_fees'] == 1%}
+<p>Your late fees due are: {{late_fees}}</p>
+<p>Please pay this amount below.</p>
+<form action="" method="POST" novalidate>
+    {{form.hidden_tag()}}
+    {{form.submit()}}
+</form>
+
+
+{% endif%}
 
 {% endblock%}

@@ -42,6 +42,9 @@ class RemoveBookForm(FlaskForm):
 class CheckoutForm(FlaskForm):
     submit = SubmitField('Checkout')
 
+class LateFeesForm(FlaskForm):
+    submit = SubmitField('Pay Fees')
+
 class ReturnForm(FlaskForm):
     book_id = IntegerField('ID of book to be returned:', validators=[InputRequired()])
     book_id2 = IntegerField('ID of second book to be returned:', validators=[InputRequired()])
@@ -57,6 +60,6 @@ class ChangeIdForm(FlaskForm):
 class ChangePasswordForm(FlaskForm):
     user_id = StringField('Please enter the id of user who requested password change:', validators=[])
     old_password = StringField('Previous Password:', validators=[])
-    new_password = StringField('New Password', validators=[InputRequired()])
-    new_password2 = StringField('Please reenter your password', validators=[InputRequired(), EqualTo('new_password')])
+    new_password = PasswordField('New Password', validators=[InputRequired()])
+    new_password2 = PasswordField('Please reenter your password', validators=[InputRequired(), EqualTo('new_password')])
     submit = SubmitField('Change Password')
