@@ -20,6 +20,9 @@
         <br />
         {{form.submit1()}}
     </form>
+{% endblock%}
+
+{% block aside_content%}
     <form action="{{url_for('admin_login')}}" method="POST" novalidate>
         {{form.hidden_tag()}}
         {{form.admin_id.label}}

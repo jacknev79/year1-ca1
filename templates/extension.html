@@ -7,16 +7,13 @@
             for this checkout instance. </p>
         <p>Your new return date is {{book['return_date']}}. </p>
     {% else%}
-            <p>{{message}} {{book['return_date']}} </p>
-
+        <p>{{message}} {{book['return_date']}} </p>
 
     {% endif%}
 
 {% else%}
 
 <p>This book is not currently checked out.</p>
-
-
 
 {% endif%}
 

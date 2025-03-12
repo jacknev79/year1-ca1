@@ -1,0 +1,31 @@
+html {
+    
+    --base-bgcolor: #f1f3f6;
+    --main-color: #0b3051;
+    --main-bgcolor: #62bbff;
+    --accent-color1: #bf3e3b;
+    --accent-color2: #006db2;
+}
+header a[href=""] {
+    color: var(--main-color);
+}
+header a:hover {
+    background-color: var(--main-bgcolor);
+}
+body > header {
+    border: 4px solid var(--main-color);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1em;
+    padding: 1em;
+    align-items: center;
+    flex: 1;
+}
+body > header a {
+    padding: 0.5em 6.5em;
+    text-decoration: none;
+    background-color: var(--accent-color2);
+}

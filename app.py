@@ -44,14 +44,14 @@ def admin_required(view):
 @app.route('/')
 def index():
 
-    return render_template('index.html')
+    return render_template('index.html', title='Welcome')
 
 @app.route('/library')
 def library():
     db = get_db()
     books = db.execute('''SELECT * FROM books;''').fetchall()
 
-    return render_template('books.html', books=books)
+    return render_template('books.html', books=books, title='Library')
 
 @app.route('/library/<int:book_id>')
 def book(book_id):
@@ -68,7 +68,8 @@ def book(book_id):
 
     else:
         restricted = 'No'
-    return render_template('book.html', book = book, checkedOut = checkedOut, restricted = restricted)
+    return render_template('book.html', book = book, checkedOut = checkedOut, 
+                           restricted = restricted, title =book['title'])
 
 @app.route('/cart')
 @login_required
@@ -87,7 +88,7 @@ def cart():
         titles[book_id] = title
     if form.validate_on_submit():
         return redirect(url_for('checkout'))
-    return render_template('cart.html', cart= session["cart"], form=form)
+    return render_template('cart.html', cart= session["cart"], form=form, title='Cart')
 
 @app.route('/add_to_cart/<int:book_id>')
 @login_required
@@ -122,7 +123,7 @@ def register():
             db.commit()
             return redirect( url_for('login'))
         
-    return render_template('register.html', form=form)
+    return render_template('register.html', form=form, title='Registration')
     
 @app.route('/login', methods = ["GET","POST"])
 def login():
@@ -153,7 +154,7 @@ def login():
         else:
             return redirect(url_for('admin_login'))
         
-    return render_template('login.html', form=form)
+    return render_template('login.html', form=form, title="Login")
 
 @app.route('/admin', methods=["GET","POST"]) 
 def admin_login():
@@ -175,7 +176,7 @@ def admin_login():
                 form.submit2.errors.append('Wrong ID or Password. Did you mean to login as user?')
         else:
             form.submit2.errors.append('Wrong ID or Password. Did you mean to login as user?')
-    return render_template('login.html', form=form)
+    return render_template('login.html', form=form,title='Login')
 
 @app.route('/logout')
 def logout():
@@ -191,7 +192,7 @@ def history():
     books = db.execute('''SELECT * FROM books 
                        WHERE book_id IN (SELECT book_id FROM checkout
                WHERE user_id = ? AND return_date < ? AND is_returned = 1);''',(session['user_id'], current_date)).fetchall()
-    return render_template ('books.html', books= books)
+    return render_template ('books.html', books= books, title='History')
 
 @app.route('/checked_out')      
 @login_required
@@ -201,7 +202,7 @@ def checked_out():
     books = db.execute('''SELECT * FROM books 
                        WHERE book_id IN (SELECT book_id FROM checkout
                WHERE user_id = ? AND is_returned = 0);''',(session['user_id'], )).fetchall()
-    return render_template ('books.html', books= books)
+    return render_template ('books.html', books= books,title="Currently Checked Out")
 
 @app.route('/request_book/<int:book_id>', methods = ["GET","POST"])
 @login_required
@@ -268,12 +269,12 @@ def request_book(book_id):
                 message = 'This book has already been requested. It will be available for checkout before: ' + new_return_date
         
 
-    return render_template('request_book.html', form = form, message = message, book_id = book_id)
+    return render_template('request_book.html', form = form, message = message, book_id = book_id, title='Request')
 
 @app.route('/add_book', methods = ["GET","POST"])
 @admin_required
 def add_book():
-    message = ''
+    
     title = ''
     author = ''
     dewey_decimal = ''
@@ -299,29 +300,25 @@ def add_book():
 
         if checked_out == 1 and restricted == 1:
             form.restricted.errors.append('Restricted books cannot be checked out.')
-            return render_template('add_book.html', form=form)
-        
         else:
             db = get_db()
-            db.execute('''INSERT INTO books (title, author, dewey_decimal, genre, location, checked_out, restricted, description)
+            db.execute('''INSERT INTO books (title, author, dewey_decimal, 
+                       genre, location, checked_out, restricted, description)
                         VALUES (?,?,?,?,?,?,?,?);''', (title,author,dewey_decimal,genre,location,checked_out,restricted,description))
             db.commit()
             if checked_out == 1:
                 book = db.execute('''SELECT MAX(book_id) FROM books;''').fetchone()
-                
-
+    
                 today_date = date.today()
                 return_date = str(today_date + timedelta(days=28))
-                db.execute('''INSERT INTO checkout (user_id, book_id, date_checked_out, return_date, extensions, is_returned,is_late)
+                db.execute('''INSERT INTO checkout (user_id, book_id, date_checked_out, 
+                           return_date, extensions, is_returned,is_late)
                         VALUES (?,?,?,?,?,?,?);''',(user_id, book['max(book_id)'], today_date, return_date, 0, 0, 0))
+            
             db.commit()
-            #message = 'Book successfully submitted.'
-        return redirect(url_for('library'))
+            return redirect(url_for('library'))
 
-    # else:
-    #     message = 'You do not have permission to view this page.'
-
-    return render_template('add_book.html', form=form, message=message)
+    return render_template('add_book.html', form=form, title="Add Book")
 
 @app.route('/remove_book', methods=["GET","POST"])
 @admin_required
@@ -336,7 +333,7 @@ def remove_book():
 
         return redirect(url_for('library'))
 
-    return render_template('remove_book.html', form=form)
+    return render_template('remove_book.html', form=form, title="Remove Book")
 
 @app.route('/checkout', methods=["GET","POST"])
 def checkout(): 
@@ -361,7 +358,7 @@ def checkout():
         session.modified = True
         return redirect(url_for('library'))
 
-    return render_template('cart.html', form=form, cart = session['cart'])
+    return render_template('cart.html', form=form, cart = session['cart'], title='Cart')
 
 @app.route('/return_books', methods=["GET","POST"])
 @login_required
@@ -397,7 +394,7 @@ def return_books():
 
         return redirect(url_for('library'))
     
-    return render_template('return_book.html', form=form)
+    return render_template('return_book.html', form=form, title='Return Books')
 
 @app.route('/return_book/<int:book_id>', methods=["GET","POST"])
 @login_required
@@ -443,7 +440,7 @@ def change_user_id():
 
         else: form.past_id.errors.append('This user does not exist.')
 
-    return render_template('change_id.html', form=form)
+    return render_template('change_id.html', form=form, title='Change User ID')
 
 @app.route('/change_password', methods=["GET","POST"])                                                    
 def change_password():
@@ -492,7 +489,7 @@ def change_password():
 
     else: 
         return redirect(url_for('login'))
-    return render_template('change_password.html', form=form, admin = admin)
+    return render_template('change_password.html', form=form, admin = admin, title='Change Password')
             
 @app.route('/extend_date/<int:book_id>')
 @login_required
@@ -517,7 +514,7 @@ def extend_date(book_id):
             message = '''You have requested an extension 6 times already. This is the max allowed per checkout 
                     instance. Please return the book to the library by: '''
     
-    return render_template('extension.html', message = message, check= check, book = book, book_title = title['title'])
+    return render_template('extension.html', message = message, check= check, book = book, book_title = title['title'],title='Request Extension')
 
 @app.route('/my_account')
 @login_required
@@ -527,7 +524,7 @@ def my_account():
                       WHERE user_id =?;''',(session['user_id'],)).fetchone()
 
 
-    return render_template('my_account.html', user=user)
+    return render_template('my_account.html', user=user, title="My Account")
 
 @app.route('/late_fees', methods=["GET","POST"])
 @login_required
@@ -554,12 +551,13 @@ def late_fees():
         db.commit()
         return redirect(url_for('payment'))
 
-    return render_template('my_account.html', late_fees = late_fees, user = user, form=form)
+    return render_template('my_account.html', late_fees = late_fees, user = user, form=form, title ='My Account')
 
 @app.route('/payment')
 @login_required
 def payment():
-    return render_template('payment.html')
+
+    return render_template('payment.html', title='Thank You!')
 
 #todo: remember me functionality, remote checkout(admin_required)
 #need update book.html so that checks if book is checked out by session['user_id], if is add functionality

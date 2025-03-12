@@ -3,11 +3,17 @@
     <head>
         <meta charset="uft-8" />
         <title>{{ title }}</title>
-        <link rel="stylesheet" href="{url_for}" />
+        <link rel="stylesheet" href="{{url_for('static', filename='styles.css')}}" />
     </head>
     <body>
         <header>
-            {{title}}
+            <h1>{{title}}</h1>
+            {% if 'admin_id' in session or 'user_id' in session%}
+                <a href="{{url_for('logout')}}">Logout</a>
+            {% else%}
+                <a href="{{url_for('register')}}">Register</a>
+                <a href="{{url_for('login')}}">Login</a>
+            {% endif%}
         </header>
         <main>
             {% block main_content%}
@@ -15,6 +21,14 @@
 
             {% endblock%}
         </main>
+        <aside>
+            {% block aside_content%}
+
+            {% endblock%}
+        </aside>
+        <footer>
+            <small><p>©Jack Neville</p></small>
+        </footer>
     </body>
 
 
