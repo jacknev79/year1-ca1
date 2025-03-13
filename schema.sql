@@ -37,31 +37,25 @@ CREATE TABLE users (
 
 INSERT INTO books (title, author, dewey_decimal, genre, location, checked_out, restricted)
 VALUES
-    ('example', 'author', '000.1', 'Information', 'Floor 3', 0, 0),
-
-    ('example2', 'author', '000.1', 'Information', 'Floor 2', 0, 1),
-    ('example3', 'author', '000.1', 'Information', 'Floor 3', 1, 0)
-
-;
-
-INSERT INTO users
-VALUES
-    ('test', 'pass', '2025-03-02', 0)
-
+    ('Napoleonic Uniforms vol 1', 'John R. Elting', '903.001', 'History', 'Floor 3', 0, 0),
+    ('Napoleonic Uniforms vol 2', 'John R. Elting', '903.002', 'History', 'Floor 3', 0, 0),
+    ('Fouche, the man Napoleon feared', 'Nils Forssell', '920.001', 'History', 'Floor 3', 0, 1),
+    ('Wuthering Heights', 'Emily Bronte', '820.001', 'Gothic Literature', 'Floor 1', 0, 0),
+    ('Life of Mirabeau', 'Tallentyre', '920.003', 'History', 'Floor 3', 0, 1),
+    ('Crime and Punishment', 'Fyodor Dostoevsky', '890.001', 'Russian Literature', 'Floor 2', 0, 0),
+    ('History of the fall and decline of the Roman Empire', 'Edward Gibbon', '900.001', 'History', 'Floor 3', 0, 0),
+    ('War and Peace', 'Leo Tolstoy', '890.002', 'Russian Literature', 'Floor 2', 0, 0),
+    ('Computing presuppositions in an incremental natural language processing system', 'Derek Bridge', '000.001', 'Computer Science', 'Floor 2', 1, 0)
 ;
 
 INSERT INTO checkout (user_id, book_id, date_checked_out, return_date, extensions, is_returned,is_late)
 VALUES
-    ('testing', 3, '2025-02-08', '2025-03-11', 0, 0,1),
-    ('tester', 5678, '2025-01-01', '2025-02-02', 0, 0,0),
-    ('tester', 3, '2025-02-20', '2025-03-09', 0, 0,0),
-    ('tester', 3, '2025-02-20', '2025-03-20', 0, 1,0),
-    ('test', 3, '2025-02-20', '2025-03-19', 0, 1,0)
-
-
+    ('tester', 9, '2025-02-20', '2025-03-09', 0, 0,0),
+    ('tester', 1, '2025-02-20', '2025-03-20', 0, 1,0)
 ;
+
 UPDATE checkout SET return_date = '2025-03-09'
-WHERE checkout_id = 5;
+WHERE checkout_id = 6;
 
 select * from books;
 select * from checkout;

@@ -47,7 +47,7 @@ class LateFeesForm(FlaskForm):
 
 class ReturnForm(FlaskForm):
     book_id = IntegerField('ID of book to be returned:', validators=[InputRequired()])
-    book_id2 = IntegerField('ID of second book to be returned:', validators=[InputRequired()])
+    book_id2 = IntegerField('ID of second book to be returned:', validators=[InputRequired()],default=0)
 
     submit = SubmitField('Return Books')
 

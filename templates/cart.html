@@ -6,8 +6,15 @@
         <table>
             {% for book_id in cart%}
                 <tr>
-                    <td> {{book_id}}</td>
-                    <td>{{cart[book_id]}} </td>
+                    <th scope="row" rowspan="2">{{cart[book_id]}} </th>
+                </tr>
+                <tr>
+                    <td> {{titles[book_id][0]}}</td>
+                    <td>{{titles[book_id][1]}} </td>
+                </tr>
+                <tr>
+                    
+                    <td>{{titles[book_id][2]}} </td>
                 </tr>
             {% endfor%}
         </table>

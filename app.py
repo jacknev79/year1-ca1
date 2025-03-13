@@ -37,7 +37,7 @@ def admin_required(view):
     @wraps(view)
     def wrapped_view(*args, **kwargs):
         if g.admin is None:
-            return redirect(url_for('admin_login', next=request.url))
+            return redirect(url_for('admin_login', next_admin=request.url))
         return view(*args, **kwargs)
     return wrapped_view
 
@@ -54,6 +54,7 @@ def library():
     return render_template('books.html', books=books, title='Library')
 
 @app.route('/library/<int:book_id>')
+@login_required
 def book(book_id):
     db = get_db()
     book = db.execute('''SELECT * FROM books
@@ -91,11 +92,11 @@ def cart():
     for book_id in session['cart']:
         book = db.execute('''SELECT * FROM books
                           WHERE book_id = ?''', (book_id,)).fetchone()
-        title = book['title']
-        titles[book_id] = title
+        book_details = (book['title'],book['author'],[book['description']])
+        titles[book_id] = book_details
     if form.validate_on_submit():
         return redirect(url_for('checkout'))
-    return render_template('cart.html', cart= session["cart"], form=form, title='Cart')
+    return render_template('cart.html', cart= session["cart"], form=form, titles=titles, title='Cart')
 
 @app.route('/add_to_cart/<int:book_id>')
 @login_required
@@ -153,7 +154,7 @@ def login():
                 session.clear()
                 session['user_id'] = user_id
                 session.modified = True
-                next_page = request.form.get('next')        #request.args.get()   needs fixing in login, admin
+                next_page = request.args.get('next')        #request.args.get()   needs fixing in login, admin
                 print(next_page)
                 if next_page is None:
                     next_page = url_for('index')
@@ -175,7 +176,7 @@ def admin_login():
                 session.clear()
                 session['admin_id'] =  admin_id
                 session.modified = True
-                next_page = request.args.get('next')
+                next_page = request.args.get('next_admin')
                 if not next_page:
                     next_page = url_for('index')
                 return redirect(next_page)
@@ -380,24 +381,25 @@ def return_books():
         book_id2 = form.book_id2.data
         
         book_ids.append(book_id1)
-        book_ids.append(book_id2)
+        book_ids.append(book_id2)               #fix crash based on "nonetype not subscitable", caused by check var
 
         for book_id in book_ids:
             if book_id is not None:
                 book = db.execute('''SELECT * FROM checkout
                                 WHERE book_id = ? AND is_returned = 0;''',(book_id,)).fetchone()
-                check = datetime.strptime(book['return_date'], '%Y-%m-%d')
+                if book is not None:
+                    check = datetime.strptime(book['return_date'], '%Y-%m-%d')          
 
-                if check < today_date:
-                    db.execute('''UPDATE checkout SET is_late = 1
-                           WHERE checkout_id = ?;''',(book['checkout_id'],))
-                    db.execute('''UPDATE users SET has_late_fees = 1
-                               WHERE user_id =?;''',(session['user_id'],))
-                db.execute('''UPDATE books SET checked_out = 0, requested = 0
-                            WHERE book_id = ?;''',(book_id,))
-                db.execute('''UPDATE checkout SET is_returned = 1
+                    if check < today_date:
+                        db.execute('''UPDATE checkout SET is_late = 1
                             WHERE checkout_id = ?;''',(book['checkout_id'],))
-                db.commit()
+                        db.execute('''UPDATE users SET has_late_fees = 1
+                                WHERE user_id =?;''',(session['user_id'],))
+                    db.execute('''UPDATE books SET checked_out = 0, requested = 0
+                                WHERE book_id = ?;''',(book_id,))
+                    db.execute('''UPDATE checkout SET is_returned = 1
+                                WHERE checkout_id = ?;''',(book['checkout_id'],))
+                    db.commit()
 
         return redirect(url_for('library'))
     
@@ -525,6 +527,7 @@ def extend_date(book_id):
 
 @app.route('/my_account')
 def my_account():
+    form = LateFeesForm()
     db = get_db()
     user=False
     admin = False
@@ -537,7 +540,7 @@ def my_account():
                       WHERE user_id =?;''',(session['user_id'],)).fetchone()
     
 
-    return render_template('my_account.html', user=user, title="My Account", admin=admin)
+    return render_template('my_account.html', user=user, title="My Account", admin=admin, form=form)
 
 @app.route('/late_fees', methods=["GET","POST"])
 @login_required
@@ -552,7 +555,7 @@ def late_fees():
     for book in books:
         return_date = datetime.strptime(book['return_date'], '%Y-%m-%d')
         late_date = (datetime.strptime(book['date_checked_out'], '%Y-%m-%d')+ timedelta(days=28))
-        difference = return_date - late_date
+        difference = late_date - return_date
         difference = difference.days
 
         late_fees += int(difference) * fee
@@ -572,6 +575,4 @@ def payment():
 
     return render_template('payment.html', title='Thank You!')
 
-#todo: remember me functionality, remote checkout(admin_required)
-#need update book.html so that checks if book is checked out by session['user_id], if is add functionality
 #need populate database with sensible data (NB return date is 28 days after checkout)

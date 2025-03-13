@@ -26,7 +26,12 @@ main {
     background-color: var(--main-bgcolor);
     color: var(--main-color);
     border: 4px solid var(--accent-color1);
-}
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: space-around;
+    align-items: center;
+}   
 header a:hover, nav a:hover {
     background-color: var(--main-bgcolor);
 }
